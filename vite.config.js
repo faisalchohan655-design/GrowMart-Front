@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    postcss: './postcss.config.js',
+  },
   server: {
     port: 5173,
     proxy: {
@@ -15,11 +18,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: false,  // ✅ Terser error fix - minify disabled
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
-      }
-    }
+    minify: false,
   }
 });
