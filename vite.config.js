@@ -15,11 +15,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
+    minify: false,  // ✅ Terser error fix - minify disabled
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
       }
     }
   }
