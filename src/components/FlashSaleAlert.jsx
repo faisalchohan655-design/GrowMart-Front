@@ -1,0 +1,77 @@
+import React, { useState, useEffect } from 'react';
+import { useStore } from '../App';
+import * as Lucide from 'lucide-react';
+
+const FlashSaleAlert = () => {
+  const { socket } = useStore();
+  const [sale, setSale] = useState(null);
+  const [timer, setTimer] = useState(0);
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleFlashSale = (data) => {
+      setSale(data);
+      setTimer(data.timer || 3600);
+      setShow(true);
+      setTimeout(() => setShow(false), 300000);
+    };
+
+    socket.on('flash-sale-alert', handleFlashSale);
+
+    return () => {
+      socket.off('flash-sale-alert', handleFlashSale);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (timer > 0 && show) {
+      const interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer, show]);
+
+  if (!show || !sale) return null;
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 0) {
+      return `${hours}h ${mins}m ${secs}s`;
+    }
+    return `${mins}m ${secs}s`;
+  };
+
+  return (
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-red-600 to-pink-600 px-6 py-3 rounded-2xl shadow-2xl animate-slide-in">
+      <div className="flex items-center gap-4">
+        <div className="text-2xl animate-pulse">⚡</div>
+        <div>
+          <div className="font-bold text-white">
+            {sale.message || 'FLASH SALE!'}
+          </div>
+          <div className="text-sm text-white/80 flex items-center gap-3">
+            {sale.discount && <span>{sale.discount}% OFF</span>}
+            {timer > 0 && (
+              <span className="font-mono bg-white/10 px-2 py-0.5 rounded">
+                {formatTime(timer)}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => setShow(false)}
+          className="text-white/60 hover:text-white transition"
+        >
+          <Lucide.X size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default FlashSaleAlert;
