@@ -28,7 +28,7 @@ const API = axios.create({
 });
 
 // ============ Socket.IO ============
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
   autoConnect: true,
   reconnection: true,
   reconnectionAttempts: 5,
