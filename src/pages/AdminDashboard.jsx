@@ -2,25 +2,84 @@ import React, { useState, useEffect } from 'react';
 import * as Lucide from 'lucide-react';
 
 const AdminDashboard = () => {
+  // ============ AUTHENTICATION ============
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adminToken') || '');
+
   // ============ DATA ============
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [analytics, setAnalytics] = useState({ revenue: 0, orders: 0, products: 0 });
-  const [loading, setLoading] = useState(false);
   const [visitors, setVisitors] = useState(0);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // ============ SIMPLE TOAST ============
-  const showToast = (msg, type) => {
-    alert(msg); // Simple alert for demo
-  };
-
-  // ============ API CALLS ============
+  // ============ API BASE ============
   const API_BASE = 'https://growmart-back-production.up.railway.app/api';
 
-  const fetchProducts = async () => {
+  // ============ AUTH HEADERS ============
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  });
+
+  // ============ LOGIN ============
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
     try {
-      const res = await fetch(`${API_BASE}/products`);
+      const res = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        localStorage.setItem('adminToken', data.token);
+        setToken(data.token);
+        setAuthenticated(true);
+        setError('');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (error) {
+      setError('❌ Network error. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  // ============ LOGOUT ============
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    setToken('');
+    setAuthenticated(false);
+    setEmail('');
+    setPassword('');
+  };
+
+  // ============ CHECK TOKEN ON MOUNT ============
+  useEffect(() => {
+    const savedToken = localStorage.getItem('adminToken');
+    if (savedToken) {
+      setToken(savedToken);
+      setAuthenticated(true);
+    }
+  }, []);
+
+  // ============ API CALLS ============
+  const fetchProducts = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/admin/products`, {
+        headers: getAuthHeaders()
+      });
       const data = await res.json();
       if (data.success) setProducts(data.data || []);
     } catch (error) {
@@ -29,8 +88,11 @@ const AdminDashboard = () => {
   };
 
   const fetchOrders = async () => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/orders`);
+      const res = await fetch(`${API_BASE}/admin/orders`, {
+        headers: getAuthHeaders()
+      });
       const data = await res.json();
       if (data.success) setOrders(data.data || []);
     } catch (error) {
@@ -39,8 +101,11 @@ const AdminDashboard = () => {
   };
 
   const fetchAnalytics = async () => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/analytics`);
+      const res = await fetch(`${API_BASE}/admin/analytics`, {
+        headers: getAuthHeaders()
+      });
       const data = await res.json();
       if (data.success) setAnalytics(data.data || {});
     } catch (error) {
@@ -50,29 +115,18 @@ const AdminDashboard = () => {
 
   // ============ LOAD DATA ============
   useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-    fetchAnalytics();
-    
-    // Visitors count
-    const interval = setInterval(() => {
-      setVisitors(Math.floor(Math.random() * 10) + 1);
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // ============ DASHBOARD ============
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-  const lowStock = products.filter(p => p.stock < 10);
-
-  const statusColors = {
-    pending: 'bg-yellow-500/20 text-yellow-400',
-    processing: 'bg-blue-500/20 text-blue-400',
-    shipped: 'bg-purple-500/20 text-purple-400',
-    delivered: 'bg-green-500/20 text-green-400',
-    cancelled: 'bg-red-500/20 text-red-400'
-  };
+    if (authenticated && token) {
+      fetchProducts();
+      fetchOrders();
+      fetchAnalytics();
+      
+      const interval = setInterval(() => {
+        setVisitors(Math.floor(Math.random() * 10) + 1);
+      }, 5000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [authenticated, token]);
 
   // ============ ADD PRODUCT ============
   const [newProduct, setNewProduct] = useState({
@@ -87,9 +141,9 @@ const AdminDashboard = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/products`, {
+      const res = await fetch(`${API_BASE}/admin/products`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           ...newProduct,
           price: parseFloat(newProduct.price) || 0,
@@ -102,6 +156,8 @@ const AdminDashboard = () => {
         alert('✅ Product added!');
         setNewProduct({ name: '', price: '', category: 'Electronics', images: [''], stock: '' });
         fetchProducts();
+      } else {
+        alert(data.message || '❌ Failed to add product');
       }
     } catch (error) {
       alert('❌ Failed to add product');
@@ -113,9 +169,17 @@ const AdminDashboard = () => {
   const deleteProduct = async (id) => {
     if (!confirm('Delete this product?')) return;
     try {
-      await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
-      alert('✅ Product deleted!');
-      fetchProducts();
+      const res = await fetch(`${API_BASE}/admin/products/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('✅ Product deleted!');
+        fetchProducts();
+      } else {
+        alert(data.message || '❌ Failed to delete');
+      }
     } catch (error) {
       alert('❌ Failed to delete');
     }
@@ -124,27 +188,98 @@ const AdminDashboard = () => {
   // ============ UPDATE ORDER ============
   const updateOrderStatus = async (id, status) => {
     try {
-      await fetch(`${API_BASE}/orders/${id}`, {
+      const res = await fetch(`${API_BASE}/admin/orders/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status })
       });
-      alert('✅ Order updated!');
-      fetchOrders();
+      const data = await res.json();
+      if (data.success) {
+        alert('✅ Order updated!');
+        fetchOrders();
+      } else {
+        alert(data.message || '❌ Failed to update');
+      }
     } catch (error) {
       alert('❌ Failed to update');
     }
   };
 
-  // ============ RENDER ============
+  // ============ DASHBOARD STATS ============
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const lowStock = products.filter(p => p.stock < 10);
+
+  const statusColors = {
+    pending: 'bg-yellow-500/20 text-yellow-400',
+    processing: 'bg-blue-500/20 text-blue-400',
+    shipped: 'bg-purple-500/20 text-purple-400',
+    delivered: 'bg-green-500/20 text-green-400',
+    cancelled: 'bg-red-500/20 text-red-400'
+  };
+
+  // ============ IF NOT AUTHENTICATED ============
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mb-4">
+              <Lucide.Zap size={32} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Admin Access</h1>
+            <p className="text-gray-400 text-sm mt-2">Enter admin credentials</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
+            <form onSubmit={handleLogin}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Admin Email"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white mb-3"
+                required
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white mb-3"
+                required
+              />
+              {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90 transition disabled:opacity-50"
+              >
+                {loading ? 'Logging in...' : 'Access Admin'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ RENDER DASHBOARD ============
   return (
     <div className="min-h-screen bg-black text-white pt-20 px-4 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Header with Logout */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">📊 Admin Dashboard</h1>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          {visitors} online
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            {visitors} online
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition text-sm"
+          >
+            <Lucide.LogOut size={16} className="inline mr-1" />
+            Logout
+          </button>
         </div>
       </div>
 
@@ -307,7 +442,7 @@ const AdminDashboard = () => {
             </div>
           </form>
         </div>
-       )}
+      )}
     </div>
   );
 };
