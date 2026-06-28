@@ -150,20 +150,26 @@ const Home = () => {
   );
 };
 
-// Product Card Component
+// ✅ UPDATED: Product Card with Fixed Image Centering
 const ProductCard = ({ product }) => {
   const { addToCart } = useStore();
 
   return (
     <div className="glass rounded-2xl p-4 border border-white/5 hover:border-purple-500/30 transition group">
       <Link to={`/product/${product._id}`}>
+        {/* Image Container - Fixed Centering */}
         <div className="aspect-square rounded-xl bg-white/5 flex items-center justify-center mb-3 overflow-hidden">
           {product.images && product.images.length > 0 ? (
-            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+            <img 
+              src={product.images[0]} 
+              alt={product.name} 
+              className="w-full h-full object-contain p-2" 
+            />
           ) : (
             <Lucide.Image size={40} className="text-gray-600" />
           )}
         </div>
+        
         <h3 className="font-medium truncate">{product.name}</h3>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-lg font-bold gradient-text">${product.price}</span>
