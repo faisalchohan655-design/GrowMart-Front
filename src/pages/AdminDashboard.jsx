@@ -2,11 +2,6 @@ import React, { useState, useEffect } from 'react';
 import * as Lucide from 'lucide-react';
 
 const AdminDashboard = () => {
-  // ============ PASSWORD ============
-  const [password, setPassword] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
-  const [error, setError] = useState('');
-
   // ============ DATA ============
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -66,51 +61,6 @@ const AdminDashboard = () => {
     
     return () => clearInterval(interval);
   }, []);
-
-  // ============ IF NOT AUTHENTICATED ============
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mb-4">
-              <Lucide.Zap size={32} className="text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Admin Access</h1>
-            <p className="text-gray-400 text-sm mt-2">Enter admin password</p>
-          </div>
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10">
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              if (password === 'growmart2025') {
-                setAuthenticated(true);
-                setError('');
-              } else {
-                setError('❌ Wrong password!');
-                setPassword('');
-              }
-            }}>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password..."
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white mb-3"
-                autoFocus
-              />
-              {error && <p className="text-red-400 text-sm mb-3">{error}</p>}
-              <button
-                type="submit"
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:opacity-90 transition"
-              >
-                Access Admin
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ============ DASHBOARD ============
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -357,7 +307,7 @@ const AdminDashboard = () => {
             </div>
           </form>
         </div>
-      )}
+       )}
     </div>
   );
 };
