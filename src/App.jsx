@@ -305,14 +305,13 @@ function App() {
               <Route path="/promotions" element={<Promotions />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              
+              {/* ✅ Admin - Direct Access (No Auth Required) */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin" element={
-                <ProtectedRoute adminOnly>
-                  <AdminDashboard />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
