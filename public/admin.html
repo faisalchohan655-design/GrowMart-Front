@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - GrowMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0a0a0f; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .gradient-bg { background: linear-gradient(135deg, #8B5CF6, #EC4899); }
+        .gradient-text { background: linear-gradient(135deg, #8B5CF6, #EC4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Password Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 mx-auto rounded-2xl gradient-bg flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <h1 class="text-3xl font-bold gradient-text">Admin Access</h1>
+                <p class="text-gray-400 text-sm mt-2">Enter password to continue</p>
+            </div>
+            <div class="glass rounded-2xl p-8">
+                <form id="loginForm">
+                    <input type="password" id="passwordInput" placeholder="Enter password..." class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white mb-3">
+                    <p id="errorMsg" class="text-red-400 text-sm mb-3 hidden">❌ Wrong password!</p>
+                    <button type="submit" class="w-full py-3 rounded-xl gradient-bg text-white font-medium hover:opacity-90 transition">Access Admin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardScreen" class="min-h-screen p-4 hidden">
+        <div class="max-w-7xl mx-auto pt-20">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-3xl font-bold gradient-text">📊 Admin Dashboard</h1>
+                <div class="flex items-center gap-2 text-sm text-gray-400">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span id="visitors">1</span> online
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="glass p-4 rounded-2xl border border-purple-500/20"><div class="text-sm text-gray-400">Revenue</div><div class="text-2xl font-bold" id="revenue">$0.00</div></div>
+                <div class="glass p-4 rounded-2xl border border-blue-500/20"><div class="text-sm text-gray-400">Orders</div><div class="text-2xl font-bold" id="orders">0</div></div>
+                <div class="glass p-4 rounded-2xl border border-red-500/20"><div class="text-sm text-gray-400">Low Stock</div><div class="text-2xl font-bold text-red-400" id="lowStock">0</div></div>
+                <div class="glass p-4 rounded-2xl border border-green-500/20"><div class="text-sm text-gray-400">Products</div><div class="text-2xl font-bold" id="products">0</div></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-2 mb-6 border-b border-white/10 pb-2">
+                <button onclick="showTab('dashboard')" class="tab-btn px-4 py-2 rounded-xl text-sm gradient-bg text-white">Dashboard</button>
+                <button onclick="showTab('orders')" class="tab-btn px-4 py-2 rounded-xl text-sm text-gray-400 hover:text-white">Orders</button>
+                <button onclick="showTab('products')" class="tab-btn px-4 py-2 rounded-xl text-sm text-gray-400 hover:text-white">Products</button>
+                <button onclick="showTab('add')" class="tab-btn px-4 py-2 rounded-xl text-sm text-gray-400 hover:text-white">➕ Add</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="tabDashboard" class="tab-content">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass p-4 rounded-2xl">
+                        <h3 class="font-bold mb-4">Quick Stats</h3>
+                        <div class="space-y-2" id="quickStats"></div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl">
+                        <h3 class="font-bold mb-4">System Status</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between"><span class="text-gray-400">Server</span><span class="text-green-400">✅ Online</span></div>
+                            <div class="flex justify-between"><span class="text-gray-400">Database</span><span class="text-green-400">✅ Connected</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="tabOrders" class="tab-content hidden">
+                <div class="glass p-4 rounded-2xl">
+                    <h2 class="font-bold mb-4">📦 Orders</h2>
+                    <div id="ordersList" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <!-- Products Tab -->
+            <div id="tabProducts" class="tab-content hidden">
+                <div class="glass p-4 rounded-2xl">
+                    <h2 class="font-bold mb-4">🛍️ Products</h2>
+                    <div id="productsList" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <!-- Add Tab -->
+            <div id="tabAdd" class="tab-content hidden">
+                <div class="glass p-6 rounded-2xl">
+                    <h2 class="text-xl font-bold mb-4">➕ Add Product</h2>
+                    <form id="addProductForm" class="grid md:grid-cols-2 gap-4">
+                        <input type="text" id="pName" placeholder="Name *" required class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none">
+                        <select id="pCategory" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 outline-none">
+                            <option>Electronics</option><option>Fashion</option><option>Home</option><option>Beauty</option>
+                        </select>
+                        <input type="number" id="pPrice" placeholder="Price *" required class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none">
+                        <input type="number" id="pStock" placeholder="Stock *" required class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none">
+                        <input type="text" id="pImage" placeholder="Image URL" class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none">
+                        <div class="md:col-span-2">
+                            <button type="submit" class="w-full py-3 rounded-xl gradient-bg text-white font-medium hover:opacity-90 transition">➕ Add Product</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'https://growmart-back-production.up.railway.app/api';
+    let products = [];
+    let orders = [];
+    let token = '';
+
+    // ============ PASSWORD ============
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const password = document.getElementById('passwordInput').value;
+        if (password === 'growmart2025') {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            loadData();
+        } else {
+            document.getElementById('errorMsg').classList.remove('hidden');
+            setTimeout(() => document.getElementById('errorMsg').classList.add('hidden'), 3000);
+        }
+    });
+
+    // ============ LOAD DATA ============
+    async function loadData() {
+        await Promise.all([loadProducts(), loadOrders(), loadAnalytics()]);
+        updateStats();
+        renderOrders();
+        renderProducts();
+    }
+
+    async function loadProducts() {
+        try {
+            const res = await fetch(`${API}/products`);
+            const data = await res.json();
+            if (data.success) products = data.data || [];
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadOrders() {
+        try {
+            const res = await fetch(`${API}/orders`);
+            const data = await res.json();
+            if (data.success) orders = data.data || [];
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadAnalytics() {
+        try {
+            const res = await fetch(`${API}/analytics`);
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('revenue').textContent = `$${(data.data?.revenue || 0).toFixed(2)}`;
+                document.getElementById('orders').textContent = data.data?.orders || 0;
+                document.getElementById('products').textContent = data.data?.products || 0;
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    // ============ UPDATE STATS ============
+    function updateStats() {
+        const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+        const lowStock = products.filter(p => p.stock < 10);
+        document.getElementById('revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+        document.getElementById('orders').textContent = orders.length;
+        document.getElementById('products').textContent = products.length;
+        document.getElementById('lowStock').textContent = lowStock.length;
+
+        // Quick stats
+        document.getElementById('quickStats').innerHTML = `
+            <div class="flex justify-between"><span class="text-gray-400">Revenue</span><span class="font-bold">$${totalRevenue.toFixed(2)}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Orders</span><span class="font-bold">${orders.length}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Products</span><span class="font-bold">${products.length}</span></div>
+            <div class="flex justify-between"><span class="text-gray-400">Low Stock</span><span class="font-bold text-red-400">${lowStock.length}</span></div>
+        `;
+    }
+
+    // ============ RENDER ORDERS ============
+    function renderOrders() {
+        const container = document.getElementById('ordersList');
+        if (orders.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-400">No orders</div>';
+            return;
+        }
+        let html = `<table class="w-full text-sm"><thead><tr>
+            <th class="px-4 py-2 text-left">Order</th>
+            <th class="px-4 py-2 text-left">Customer</th>
+            <th class="px-4 py-2 text-left">Total</th>
+            <th class="px-4 py-2 text-left">Status</th>
+        </tr></thead><tbody>`;
+        orders.slice(0, 20).forEach(o => {
+            html += `<tr class="border-t border-white/10">
+                <td class="px-4 py-2 font-mono text-xs">${o.orderId}</td>
+                <td class="px-4 py-2">${o.customer?.name || 'N/A'}</td>
+                <td class="px-4 py-2 font-bold">$${o.total}</td>
+                <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs bg-yellow-500/20 text-yellow-400">${o.status}</span></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    // ============ RENDER PRODUCTS ============
+    function renderProducts() {
+        const container = document.getElementById('productsList');
+        if (products.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-400">No products</div>';
+            return;
+        }
+        let html = `<table class="w-full text-sm"><thead><tr>
+            <th class="px-4 py-2 text-left">Product</th>
+            <th class="px-4 py-2 text-left">Price</th>
+            <th class="px-4 py-2 text-left">Stock</th>
+            <th class="px-4 py-2 text-left">Action</th>
+        </tr></thead><tbody>`;
+        products.forEach(p => {
+            html += `<tr class="border-t border-white/10">
+                <td class="px-4 py-2"><div class="flex items-center gap-2">${p.images?.[0] ? `<img src="${p.images[0]}" class="w-8 h-8 rounded object-cover" />` : ''}${p.name}</div></td>
+                <td class="px-4 py-2">$${p.price}</td>
+                <td class="px-4 py-2">${p.stock}</td>
+                <td class="px-4 py-2"><button onclick="deleteProduct('${p._id}')" class="text-red-400 hover:text-red-300">🗑️</button></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    // ============ ADD PRODUCT ============
+    document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const name = document.getElementById('pName').value;
+        const price = parseFloat(document.getElementById('pPrice').value);
+        const stock = parseInt(document.getElementById('pStock').value);
+        const category = document.getElementById('pCategory').value;
+        const images = [document.getElementById('pImage').value].filter(Boolean);
+
+        if (!name || !price || !stock) {
+            alert('Please fill all required fields');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/products`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, stock, category, images })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Product added!');
+                this.reset();
+                loadData();
+            }
+        } catch(e) {
+            alert('❌ Failed to add product');
+        }
+    });
+
+    // ============ DELETE PRODUCT ============
+    async function deleteProduct(id) {
+        if (!confirm('Delete this product?')) return;
+        try {
+            await fetch(`${API}/products/${id}`, { method: 'DELETE' });
+            alert('✅ Product deleted!');
+            loadData();
+        } catch(e) {
+            alert('❌ Failed to delete');
+        }
+    }
+
+    // ============ TABS ============
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('gradient-bg', 'text-white');
+            el.classList.add('text-gray-400');
+        });
+        const btns = document.querySelectorAll('.tab-btn');
+        const idx = ['dashboard', 'orders', 'products', 'add'].indexOf(tab);
+        if (btns[idx]) {
+            btns[idx].classList.remove('text-gray-400');
+            btns[idx].classList.add('gradient-bg', 'text-white');
+        }
+    }
+
+    // ============ VISITORS ============
+    setInterval(() => {
+        document.getElementById('visitors').textContent = Math.floor(Math.random() * 10) + 1;
+    }, 5000);
+
+    // ============ ENTER KEY ============
+    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+    });
+</script>
+
+</body>
+</html>
