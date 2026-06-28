@@ -50,15 +50,15 @@ const ProductDetails = () => {
   return (
     <div className="pt-20 px-4 md:px-6 max-w-7xl mx-auto">
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Images - Fixed Centering */}
+        {/* Images - With CSS Class */}
         <div>
           <div className="glass rounded-2xl p-4 mb-4">
-            <div className="aspect-square rounded-xl bg-white/5 flex items-center justify-center overflow-hidden">
+            <div className="image-container aspect-square rounded-xl bg-white/5">
               {images[selectedImage] ? (
                 <img 
                   src={images[selectedImage]} 
                   alt={product.name} 
-                  className="w-full h-full object-contain p-4" 
+                  className="product-detail-image" 
                 />
               ) : (
                 <Lucide.Image size={80} className="text-gray-600" />
