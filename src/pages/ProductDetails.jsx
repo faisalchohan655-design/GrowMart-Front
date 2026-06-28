@@ -50,12 +50,16 @@ const ProductDetails = () => {
   return (
     <div className="pt-20 px-4 md:px-6 max-w-7xl mx-auto">
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Images */}
+        {/* Images - Fixed Centering */}
         <div>
           <div className="glass rounded-2xl p-4 mb-4">
             <div className="aspect-square rounded-xl bg-white/5 flex items-center justify-center overflow-hidden">
               {images[selectedImage] ? (
-                <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                <img 
+                  src={images[selectedImage]} 
+                  alt={product.name} 
+                  className="w-full h-full object-contain p-4" 
+                />
               ) : (
                 <Lucide.Image size={80} className="text-gray-600" />
               )}
@@ -67,7 +71,7 @@ const ProductDetails = () => {
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition ${
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition flex-shrink-0 ${
                     selectedImage === i ? 'border-purple-500' : 'border-transparent'
                   }`}
                 >
