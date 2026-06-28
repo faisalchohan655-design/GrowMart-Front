@@ -10,21 +10,10 @@ const AdminDashboard = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  // Admin Password (Change this to your own password)
+  // Admin Password
   const ADMIN_PASSWORD = 'growmart2025';
 
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      setAuthenticated(true);
-      setPasswordError('');
-    } else {
-      setPasswordError('❌ Wrong password! Try again.');
-      setPassword('');
-    }
-  };
-
-  // ============ If Not Authenticated, Show Password Screen ============
+  // ============ PASSWORD SCREEN ============
   if (!authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-black">
@@ -37,7 +26,16 @@ const AdminDashboard = () => {
             <p className="text-gray-400 text-sm mt-2">Enter password to access admin panel</p>
           </div>
           <div className="glass rounded-2xl p-8 border border-white/5">
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (password === ADMIN_PASSWORD) {
+                setAuthenticated(true);
+                setPasswordError('');
+              } else {
+                setPasswordError('❌ Wrong password! Try again.');
+                setPassword('');
+              }
+            }} className="space-y-4">
               <div>
                 <label className="text-xs text-gray-400 block mb-1">Admin Password</label>
                 <input
@@ -58,9 +56,6 @@ const AdminDashboard = () => {
               >
                 Access Admin Panel
               </button>
-              <div className="text-center text-xs text-gray-500 mt-2">
-                🔒 Protected area - Authorized access only
-              </div>
             </form>
           </div>
         </div>
@@ -68,7 +63,7 @@ const AdminDashboard = () => {
     );
   }
 
-  // ============ ADMIN DASHBOARD (Only After Authentication) ============
+  // ============ DASHBOARD (After Password) ============
   const [activeTab, setActiveTab] = useState('dashboard');
   const [analytics, setAnalytics] = useState({ revenue: 0, orders: 0, products: 0 });
   const [newProduct, setNewProduct] = useState({
@@ -226,7 +221,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Dashboard Tab */}
+      {/* Dashboard */}
       {activeTab === 'dashboard' && (
         <div className="grid md:grid-cols-2 gap-6">
           <div className="glass p-4 rounded-2xl">
@@ -286,7 +281,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Orders Tab */}
+      {/* Orders */}
       {activeTab === 'orders' && (
         <div className="glass p-4 rounded-2xl">
           <h2 className="font-bold mb-4">📦 Orders Management</h2>
@@ -344,7 +339,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Products Tab */}
+      {/* Products */}
       {activeTab === 'products' && (
         <div className="glass p-4 rounded-2xl">
           <h2 className="font-bold mb-4">🛍️ Product Management ({products.length} products)</h2>
@@ -406,7 +401,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Add Product Tab */}
+      {/* Add Product */}
       {activeTab === 'add-product' && (
         <div className="glass p-6 rounded-2xl">
           <h2 className="text-xl font-bold mb-4">➕ Add New Product</h2>
