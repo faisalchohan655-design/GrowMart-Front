@@ -3,7 +3,7 @@ import { useStore } from '../App';
 import * as Lucide from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { orders, products, fetchOrders, fetchProducts, visitors, socket, showToast, API } = useStore();
+  const { orders, products, fetchOrders, fetchProducts, visitors, showToast, API } = useStore();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [analytics, setAnalytics] = useState({ revenue: 0, orders: 0, products: 0 });
@@ -19,27 +19,12 @@ const AdminDashboard = () => {
     isOnSale: false,
     salePrice: ''
   });
-  const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ============ FETCH DATA ============
   useEffect(() => {
     fetchOrders();
     fetchProducts();
     loadAnalytics();
-    
-    if (socket) {
-      socket.on('order-notification', () => {
-        fetchOrders();
-        loadAnalytics();
-      });
-    }
-    
-    return () => {
-      if (socket) {
-        socket.off('order-notification');
-      }
-    };
   }, []);
 
   const loadAnalytics = async () => {
@@ -53,7 +38,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ============ PRODUCT MANAGEMENT ============
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -115,7 +99,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ============ STATS ============
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const lowStockProducts = products.filter(p => p.stock < 10);
 
@@ -127,7 +110,6 @@ const AdminDashboard = () => {
     cancelled: 'bg-red-500/20 text-red-400'
   };
 
-  // ============ RENDER ============
   return (
     <div className="pt-20 px-4 md:px-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -180,7 +162,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* ============ DASHBOARD TAB ============ */}
+      {/* Dashboard Tab */}
       {activeTab === 'dashboard' && (
         <div className="grid md:grid-cols-2 gap-6">
           <div className="glass p-4 rounded-2xl">
@@ -225,7 +207,6 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-          {/* Low Stock Alert */}
           {lowStockProducts.length > 0 && (
             <div className="md:col-span-2 glass p-4 rounded-2xl border border-red-500/20">
               <h3 className="font-bold text-red-400 mb-2">⚠️ Low Stock Alert</h3>
@@ -241,7 +222,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ============ ORDERS TAB ============ */}
+      {/* Orders Tab */}
       {activeTab === 'orders' && (
         <div className="glass p-4 rounded-2xl">
           <h2 className="font-bold mb-4">📦 Orders Management</h2>
@@ -299,7 +280,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ============ PRODUCTS TAB ============ */}
+      {/* Products Tab */}
       {activeTab === 'products' && (
         <div className="glass p-4 rounded-2xl">
           <h2 className="font-bold mb-4">🛍️ Product Management ({products.length} products)</h2>
@@ -361,7 +342,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ============ ADD PRODUCT TAB ============ */}
+      {/* Add Product Tab */}
       {activeTab === 'add-product' && (
         <div className="glass p-6 rounded-2xl">
           <h2 className="text-xl font-bold mb-4">➕ Add New Product</h2>
