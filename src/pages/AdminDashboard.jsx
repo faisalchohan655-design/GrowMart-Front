@@ -5,6 +5,70 @@ import * as Lucide from 'lucide-react';
 const AdminDashboard = () => {
   const { orders, products, fetchOrders, fetchProducts, visitors, showToast, API } = useStore();
   
+  // ============ ADMIN PASSWORD PROTECTION ============
+  const [password, setPassword] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  // Admin Password (Change this to your own password)
+  const ADMIN_PASSWORD = 'growmart2025';
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setAuthenticated(true);
+      setPasswordError('');
+    } else {
+      setPasswordError('❌ Wrong password! Try again.');
+      setPassword('');
+    }
+  };
+
+  // ============ If Not Authenticated, Show Password Screen ============
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-black">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 mx-auto rounded-2xl gradient-bg flex items-center justify-center mb-4">
+              <Lucide.Zap size={32} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-bold gradient-text">Admin Access</h1>
+            <p className="text-gray-400 text-sm mt-2">Enter password to access admin panel</p>
+          </div>
+          <div className="glass rounded-2xl p-8 border border-white/5">
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Admin Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none"
+                  placeholder="Enter admin password..."
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-red-400 text-sm mt-2">{passwordError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl gradient-bg text-white font-medium hover:opacity-90 transition"
+              >
+                Access Admin Panel
+              </button>
+              <div className="text-center text-xs text-gray-500 mt-2">
+                🔒 Protected area - Authorized access only
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ ADMIN DASHBOARD (Only After Authentication) ============
   const [activeTab, setActiveTab] = useState('dashboard');
   const [analytics, setAnalytics] = useState({ revenue: 0, orders: 0, products: 0 });
   const [newProduct, setNewProduct] = useState({
