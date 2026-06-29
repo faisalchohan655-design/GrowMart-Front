@@ -3,13 +3,15 @@ import * as Lucide from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboard = () => {
-  // ============ STATE ============
+  // ============ AUTHENTICATION ============
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('adminToken') || '');
+
+  // ============ DATA ============
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [analytics, setAnalytics] = useState({ revenue: 0, orders: 0, products: 0 });
@@ -138,33 +140,65 @@ const AdminDashboard = () => {
     }
   }, [authenticated, token]);
 
-  // ============ ADD PRODUCT ============
+  // ============ ADD PRODUCT - UPDATED WITH DETAILS ============
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
     category: 'Electronics',
     images: [''],
-    stock: ''
+    stock: '',
+    description: '',
+    brand: '',
+    color: '',
+    size: '',
+    material: '',
+    weight: '',
+    dimensions: '',
+    warranty: '',
+    tags: '',
+    isFeatured: false,
+    isOnSale: false,
+    salePrice: ''
   });
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const productData = {
+        name: newProduct.name,
+        price: parseFloat(newProduct.price) || 0,
+        category: newProduct.category,
+        images: newProduct.images.filter(img => img.trim()),
+        stock: parseInt(newProduct.stock) || 0,
+        description: newProduct.description,
+        brand: newProduct.brand,
+        color: newProduct.color,
+        size: newProduct.size,
+        material: newProduct.material,
+        weight: newProduct.weight,
+        dimensions: newProduct.dimensions,
+        warranty: newProduct.warranty,
+        tags: newProduct.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        isFeatured: newProduct.isFeatured,
+        isOnSale: newProduct.isOnSale,
+        salePrice: newProduct.salePrice ? parseFloat(newProduct.salePrice) : null
+      };
+
       const res = await fetch(`${API_BASE}/admin/products`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...newProduct,
-          price: parseFloat(newProduct.price) || 0,
-          stock: parseInt(newProduct.stock) || 0,
-          images: newProduct.images.filter(img => img.trim())
-        })
+        body: JSON.stringify(productData)
       });
       const data = await res.json();
       if (data.success) {
         showNotification('✅ Product added successfully!', 'success');
-        setNewProduct({ name: '', price: '', category: 'Electronics', images: [''], stock: '' });
+        setNewProduct({ 
+          name: '', price: '', category: 'Electronics', images: [''], stock: '',
+          description: '', brand: '', color: '', size: '', material: '', 
+          weight: '', dimensions: '', warranty: '', tags: '',
+          isFeatured: false, isOnSale: false, salePrice: ''
+        });
         fetchProducts();
       } else {
         showNotification(data.message || '❌ Failed to add product', 'error');
@@ -241,7 +275,6 @@ const AdminDashboard = () => {
   if (!authenticated) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-gray-100'} p-4 relative overflow-hidden`}>
-        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -563,6 +596,9 @@ const AdminDashboard = () => {
                       <p className={`text-xs ${p.stock < 10 ? 'text-red-400' : 'text-gray-400'}`}>
                         Stock: {p.stock} {p.stock < 10 && '⚠️'}
                       </p>
+                      {p.description && (
+                        <p className="text-xs text-gray-500 truncate mt-1">{p.description}</p>
+                      )}
                     </div>
                     <button 
                       onClick={() => deleteProduct(p._id)} 
@@ -578,13 +614,15 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Add Product */}
+      {/* ============ ADD PRODUCT - UPDATED WITH DETAILS ============ */}
       {activeTab === 'add-product' && (
-        <div className="backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10 max-w-2xl mx-auto">
+        <div className="backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10 max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
             ✨ Add New Product
           </h2>
+          
           <form onSubmit={handleAddProduct} className="space-y-4">
+            {/* Basic Info - 2 Columns */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Product Name *</label>
@@ -594,7 +632,7 @@ const AdminDashboard = () => {
                   required 
                   value={newProduct.name} 
                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} 
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300 focus:shadow-lg focus:shadow-purple-500/20"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
                 />
               </div>
               <div>
@@ -608,17 +646,26 @@ const AdminDashboard = () => {
                   <option>Fashion</option>
                   <option>Home</option>
                   <option>Beauty</option>
+                  <option>Groceries</option>
+                  <option>Books</option>
+                  <option>Sports</option>
+                  <option>Toys</option>
                 </select>
               </div>
+            </div>
+
+            {/* Price & Stock - 2 Columns */}
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Price *</label>
+                <label className="text-sm text-gray-400 mb-1 block">Price * ($)</label>
                 <input 
                   type="number" 
+                  step="0.01"
                   placeholder="0.00" 
                   required 
                   value={newProduct.price} 
                   onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} 
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300 focus:shadow-lg focus:shadow-purple-500/20"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
                 />
               </div>
               <div>
@@ -629,10 +676,154 @@ const AdminDashboard = () => {
                   required 
                   value={newProduct.stock} 
                   onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})} 
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300 focus:shadow-lg focus:shadow-purple-500/20"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
                 />
               </div>
             </div>
+
+            {/* Product Details - New Section */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Brand</label>
+                <input 
+                  type="text" 
+                  placeholder="Brand name" 
+                  value={newProduct.brand} 
+                  onChange={(e) => setNewProduct({...newProduct, brand: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Color</label>
+                <input 
+                  type="text" 
+                  placeholder="Color" 
+                  value={newProduct.color} 
+                  onChange={(e) => setNewProduct({...newProduct, color: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Size</label>
+                <input 
+                  type="text" 
+                  placeholder="S, M, L, XL or specific" 
+                  value={newProduct.size} 
+                  onChange={(e) => setNewProduct({...newProduct, size: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Material</label>
+                <input 
+                  type="text" 
+                  placeholder="Material type" 
+                  value={newProduct.material} 
+                  onChange={(e) => setNewProduct({...newProduct, material: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Weight (kg)</label>
+                <input 
+                  type="text" 
+                  placeholder="0.5 kg" 
+                  value={newProduct.weight} 
+                  onChange={(e) => setNewProduct({...newProduct, weight: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Dimensions</label>
+                <input 
+                  type="text" 
+                  placeholder="10 x 20 x 30 cm" 
+                  value={newProduct.dimensions} 
+                  onChange={(e) => setNewProduct({...newProduct, dimensions: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Warranty</label>
+                <input 
+                  type="text" 
+                  placeholder="12 months warranty" 
+                  value={newProduct.warranty} 
+                  onChange={(e) => setNewProduct({...newProduct, warranty: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Tags (comma separated)</label>
+                <input 
+                  type="text" 
+                  placeholder="electronics, gadgets, new" 
+                  value={newProduct.tags} 
+                  onChange={(e) => setNewProduct({...newProduct, tags: e.target.value})} 
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            {/* Sale Options */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-4">
+                <label className="text-sm text-gray-400 flex items-center gap-2">
+                  <input 
+                    type="checkbox"
+                    checked={newProduct.isFeatured}
+                    onChange={(e) => setNewProduct({...newProduct, isFeatured: e.target.checked})}
+                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500"
+                  />
+                  Featured Product
+                </label>
+                <label className="text-sm text-gray-400 flex items-center gap-2">
+                  <input 
+                    type="checkbox"
+                    checked={newProduct.isOnSale}
+                    onChange={(e) => setNewProduct({...newProduct, isOnSale: e.target.checked})}
+                    className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500"
+                  />
+                  On Sale
+                </label>
+              </div>
+              {newProduct.isOnSale && (
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Sale Price ($)</label>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    placeholder="Sale price" 
+                    value={newProduct.salePrice} 
+                    onChange={(e) => setNewProduct({...newProduct, salePrice: e.target.value})} 
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Description - Full Width */}
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Product Description</label>
+              <textarea 
+                placeholder="Detailed product description..." 
+                rows="4"
+                value={newProduct.description} 
+                onChange={(e) => setNewProduct({...newProduct, description: e.target.value})} 
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300 resize-y"
+              />
+            </div>
+
+            {/* Image URL */}
             <div>
               <label className="text-sm text-gray-400 mb-1 block">Image URL</label>
               <input 
@@ -640,9 +831,31 @@ const AdminDashboard = () => {
                 placeholder="https://example.com/image.jpg" 
                 value={newProduct.images[0]} 
                 onChange={(e) => setNewProduct({...newProduct, images: [e.target.value]})} 
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300 focus:shadow-lg focus:shadow-purple-500/20"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition-all duration-300"
               />
             </div>
+
+            {/* Preview Section */}
+            {newProduct.images[0] && (
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-sm text-gray-400 mb-2">Preview:</p>
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={newProduct.images[0]} 
+                    alt="Product preview" 
+                    className="w-20 h-20 rounded-lg object-cover border border-white/10"
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                  <div>
+                    <p className="font-medium">{newProduct.name || 'Product Name'}</p>
+                    <p className="text-purple-400">${newProduct.price || '0.00'}</p>
+                    <p className="text-sm text-gray-400">{newProduct.category}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
             <button 
               type="submit" 
               disabled={loading} 
