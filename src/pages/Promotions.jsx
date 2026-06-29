@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import * as Lucide from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
 
 const Promotions = () => {
   const [promotions, setPromotions] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [visitors, setVisitors] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [timeLeft, setTimeLeft] = useState({
     days: 2,
@@ -18,16 +16,6 @@ const Promotions = () => {
   });
 
   const API_BASE = 'https://growmart-back-production.up.railway.app/api';
-  const SOCKET_URL = 'https://growmart-back-production.up.railway.app';
-
-  // ============ SOCKET.IO - REAL VISITORS ============
-  useEffect(() => {
-    const socket = io(SOCKET_URL);
-    socket.on('visitors', (count) => {
-      setVisitors(count);
-    });
-    return () => socket.disconnect();
-  }, []);
 
   // ============ COUNTDOWN TIMER ============
   useEffect(() => {
@@ -50,24 +38,34 @@ const Promotions = () => {
 
   const fetchPromotions = async () => {
     try {
-      const [productsRes, featuredRes] = await Promise.all([
-        fetch(`${API_BASE}/products`),
-        fetch(`${API_BASE}/products?featured=true`)
-      ]);
+      // First try to get promotions from API
+      let promotionsData = [];
+      let featuredData = [];
 
-      const productsData = await productsRes.json();
-      const featuredData = await featuredRes.json();
-
-      if (productsData.success) {
-        const onSale = productsData.data.filter(p => p.isOnSale === true);
-        setPromotions(onSale);
+      try {
+        const res = await fetch(`${API_BASE}/promotions`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) promotionsData = data.data || [];
+        }
+      } catch (e) {
+        console.log('Promotions API not found, using products instead');
       }
 
-      if (featuredData.success) {
-        setFeatured(featuredData.data || []);
+      // If no promotions, get from products
+      if (promotionsData.length === 0) {
+        const productsRes = await fetch(`${API_BASE}/products`);
+        const productsData = await productsRes.json();
+        if (productsData.success) {
+          promotionsData = productsData.data.filter(p => p.isOnSale === true);
+          featuredData = productsData.data.filter(p => p.isFeatured === true).slice(0, 4);
+        }
       }
+
+      setPromotions(promotionsData);
+      setFeatured(featuredData);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching promotions:', error);
     }
     setLoading(false);
   };
@@ -94,16 +92,19 @@ const Promotions = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="spinner" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading promotions...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden pt-20">
       
       {/* ============ HERO SECTION ============ */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      <section className="relative py-16 px-4 overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-[-30%] right-[-20%] w-[500px] h-[500px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-[120px]" />
           <div className="absolute bottom-[-30%] left-[-20%] w-[400px] h-[400px] bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full blur-[120px]" />
@@ -113,15 +114,15 @@ const Promotions = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            {/* Live Visitors - REAL */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-6">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-400">{visitors} shoppers online</span>
+              <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
+              <span className="text-sm text-gray-400">🔥 Limited Time Offers</span>
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="gradient-text">🔥 Special Offers</span>
+              <span className="gradient-text">Special Offers</span>
               <br />
               <span className="text-white">Just for You!</span>
             </h1>
@@ -194,8 +195,8 @@ const Promotions = () => {
               variants={staggerContainer}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"
             >
-              {featured.slice(0, 4).map((product, index) => (
-                <FeaturedCard key={product._id} product={product} index={index} />
+              {featured.slice(0, 4).map((product) => (
+                <FeaturedCard key={product._id} product={product} />
               ))}
             </motion.div>
           </div>
@@ -226,6 +227,9 @@ const Promotions = () => {
               <Lucide.Gift className="w-16 h-16 mx-auto text-gray-500 mb-4" />
               <h3 className="text-xl font-medium mb-2">No Deals Available</h3>
               <p className="text-gray-400">Check back later for exciting promotions!</p>
+              <Link to="/products" className="text-purple-400 hover:text-purple-300 mt-4 inline-block">
+                Browse Products →
+              </Link>
             </div>
           ) : (
             <motion.div
@@ -235,8 +239,8 @@ const Promotions = () => {
               variants={staggerContainer}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-              {filteredPromotions.map((product, index) => (
-                <PromotionCard key={product._id} product={product} index={index} />
+              {filteredPromotions.map((product) => (
+                <PromotionCard key={product._id} product={product} />
               ))}
             </motion.div>
           )}
@@ -247,12 +251,12 @@ const Promotions = () => {
 };
 
 // ============ FEATURED CARD ============
-const FeaturedCard = ({ product, index }) => {
+const FeaturedCard = ({ product }) => {
   return (
     <motion.div
       variants={{
         hidden: { opacity: 0, y: 30 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: index * 0.1 } }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
       }}
       className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/5 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 group"
     >
@@ -284,9 +288,6 @@ const FeaturedCard = ({ product, index }) => {
           </h3>
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xl font-bold gradient-text">${product.price}</span>
-            {product.salePrice && (
-              <span className="text-sm text-gray-500 line-through">${product.salePrice}</span>
-            )}
           </div>
           <button className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium hover:opacity-90 transition shadow-lg shadow-purple-500/20">
             Shop Now
@@ -298,12 +299,16 @@ const FeaturedCard = ({ product, index }) => {
 };
 
 // ============ PROMOTION CARD ============
-const PromotionCard = ({ product, index }) => {
+const PromotionCard = ({ product }) => {
+  const discount = product.salePrice 
+    ? Math.round((1 - product.salePrice / product.price) * 100)
+    : 0;
+
   return (
     <motion.div
       variants={{
         hidden: { opacity: 0, y: 30 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: index * 0.05 } }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
       }}
       className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10"
     >
@@ -323,7 +328,7 @@ const PromotionCard = ({ product, index }) => {
           
           {product.isOnSale && product.salePrice && (
             <div className="absolute top-2 left-2 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold animate-pulse">
-              {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+              {discount}% OFF
             </div>
           )}
           
@@ -335,14 +340,10 @@ const PromotionCard = ({ product, index }) => {
         </div>
 
         <div className="p-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-medium text-white group-hover:text-purple-400 transition line-clamp-1">
-                {product.name}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">{product.category}</p>
-            </div>
-          </div>
+          <h3 className="font-medium text-white group-hover:text-purple-400 transition line-clamp-1">
+            {product.name}
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">{product.category}</p>
 
           <div className="flex items-center gap-2 mt-2">
             {product.salePrice ? (
