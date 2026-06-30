@@ -21,11 +21,16 @@ const Promotions = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        const newSeconds = prev.seconds - 1;
-        if (newSeconds < 0) {
-          return { ...prev, seconds: 59, minutes: prev.minutes - 1 };
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        } else if (prev.days > 0) {
+          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
         }
-        return { ...prev, seconds: newSeconds };
+        return prev;
       });
     }, 1000);
     return () => clearInterval(timer);
@@ -38,32 +43,18 @@ const Promotions = () => {
 
   const fetchPromotions = async () => {
     try {
-      // First try to get promotions from API
-      let promotionsData = [];
-      let featuredData = [];
-
-      try {
-        const res = await fetch(`${API_BASE}/promotions`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success) promotionsData = data.data || [];
-        }
-      } catch (e) {
-        console.log('Promotions API not found, using products instead');
+      // Directly fetch all products and filter on-sale items
+      const res = await fetch(`${API_BASE}/products`);
+      const data = await res.json();
+      
+      if (data.success) {
+        // Filter products that are on sale
+        const onSale = data.data.filter(p => p.isOnSale === true);
+        const featuredItems = data.data.filter(p => p.isFeatured === true).slice(0, 4);
+        
+        setPromotions(onSale);
+        setFeatured(featuredItems);
       }
-
-      // If no promotions, get from products
-      if (promotionsData.length === 0) {
-        const productsRes = await fetch(`${API_BASE}/products`);
-        const productsData = await productsRes.json();
-        if (productsData.success) {
-          promotionsData = productsData.data.filter(p => p.isOnSale === true);
-          featuredData = productsData.data.filter(p => p.isFeatured === true).slice(0, 4);
-        }
-      }
-
-      setPromotions(promotionsData);
-      setFeatured(featuredData);
     } catch (error) {
       console.error('Error fetching promotions:', error);
     }
