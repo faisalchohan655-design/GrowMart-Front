@@ -20,6 +20,15 @@ const AdminDashboard = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState([]);
 
+  // ============ PROMOTIONS SETTINGS ============
+  const [promotionsEnabled, setPromotionsEnabled] = useState(() => {
+    const saved = localStorage.getItem('promotionsEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [promotionMessage, setPromotionMessage] = useState(() => {
+    return localStorage.getItem('promotionMessage') || '🔥 Limited Time Offers!';
+  });
+
   // ============ API BASE ============
   const API_BASE = 'https://growmart-back-production.up.railway.app/api';
 
@@ -140,7 +149,7 @@ const AdminDashboard = () => {
     }
   }, [authenticated, token]);
 
-  // ============ ADD PRODUCT - UPDATED WITH DETAILS ============
+  // ============ ADD PRODUCT ============
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
@@ -249,6 +258,18 @@ const AdminDashboard = () => {
     }
   };
 
+  // ============ PROMOTIONS TOGGLE HANDLERS ============
+  const togglePromotions = (enabled) => {
+    setPromotionsEnabled(enabled);
+    localStorage.setItem('promotionsEnabled', JSON.stringify(enabled));
+    showNotification(enabled ? '✅ Promotions Enabled' : '⛔ Promotions Disabled', 'info');
+  };
+
+  const updatePromotionMessage = (msg) => {
+    setPromotionMessage(msg);
+    localStorage.setItem('promotionMessage', msg);
+  };
+
   // ============ DASHBOARD STATS ============
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const lowStock = products.filter(p => p.stock < 10);
@@ -261,7 +282,6 @@ const AdminDashboard = () => {
     cancelled: 'bg-red-500/20 text-red-400'
   };
 
-  // Sample chart data
   const revenueData = [
     { month: 'Jan', revenue: 4000 },
     { month: 'Feb', revenue: 3000 },
@@ -276,8 +296,8 @@ const AdminDashboard = () => {
     return (
       <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-black' : 'bg-gray-100'} p-4 relative overflow-hidden`}>
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
         
         <div className="relative z-10 w-full max-w-md">
@@ -326,7 +346,7 @@ const AdminDashboard = () => {
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Logging in...
                   </div>
                 ) : (
@@ -411,6 +431,7 @@ const AdminDashboard = () => {
           { id: 'orders', label: '📦 Orders' },
           { id: 'products', label: '🛍️ Products' },
           { id: 'add-product', label: '➕ Add Product' },
+          { id: 'settings', label: '⚙️ Settings' }, // NEW TAB
         ].map((tab) => (
           <button
             key={tab.id}
@@ -426,7 +447,7 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Dashboard */}
+      {/* Dashboard Tab */}
       {activeTab === 'dashboard' && (
         <div className="grid md:grid-cols-2 gap-6">
           <div className="backdrop-blur-xl bg-white/5 p-6 rounded-2xl border border-white/10">
@@ -462,7 +483,7 @@ const AdminDashboard = () => {
                 { label: 'Server', status: '✅ Online', color: 'text-green-400' },
                 { label: 'Database', status: '✅ Connected', color: 'text-green-400' },
                 { label: 'Socket.IO', status: '✅ Active', color: 'text-green-400' },
-                { label: 'Stripe', status: '✅ Ready', color: 'text-green-400' },
+                { label: 'Promotions Page', status: promotionsEnabled ? '✅ Enabled' : '⛔ Disabled', color: promotionsEnabled ? 'text-green-400' : 'text-red-400' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
                   <span className="text-gray-400">{item.label}</span>
@@ -513,7 +534,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Orders */}
+      {/* Orders Tab */}
       {activeTab === 'orders' && (
         <div className="backdrop-blur-xl bg-white/5 p-6 rounded-2xl border border-white/10">
           <h2 className="font-bold mb-4 flex items-center gap-2">
@@ -570,7 +591,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Products */}
+      {/* Products Tab */}
       {activeTab === 'products' && (
         <div className="backdrop-blur-xl bg-white/5 p-6 rounded-2xl border border-white/10">
           <h2 className="font-bold mb-4 flex items-center gap-2">
@@ -596,8 +617,10 @@ const AdminDashboard = () => {
                       <p className={`text-xs ${p.stock < 10 ? 'text-red-400' : 'text-gray-400'}`}>
                         Stock: {p.stock} {p.stock < 10 && '⚠️'}
                       </p>
-                      {p.description && (
-                        <p className="text-xs text-gray-500 truncate mt-1">{p.description}</p>
+                      {p.isOnSale && (
+                        <span className="inline-block mt-1 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">
+                          🔥 On Sale
+                        </span>
                       )}
                     </div>
                     <button 
@@ -614,7 +637,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ============ ADD PRODUCT - UPDATED WITH DETAILS ============ */}
+      {/* Add Product Tab */}
       {activeTab === 'add-product' && (
         <div className="backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10 max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -622,7 +645,7 @@ const AdminDashboard = () => {
           </h2>
           
           <form onSubmit={handleAddProduct} className="space-y-4">
-            {/* Basic Info - 2 Columns */}
+            {/* Basic Info */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Product Name *</label>
@@ -654,7 +677,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Price & Stock - 2 Columns */}
+            {/* Price & Stock */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Price * ($)</label>
@@ -681,7 +704,7 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Product Details - New Section */}
+            {/* Product Details */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Brand</label>
@@ -776,7 +799,7 @@ const AdminDashboard = () => {
 
             {/* Sale Options */}
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <label className="text-sm text-gray-400 flex items-center gap-2">
                   <input 
                     type="checkbox"
@@ -784,7 +807,7 @@ const AdminDashboard = () => {
                     onChange={(e) => setNewProduct({...newProduct, isFeatured: e.target.checked})}
                     className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500"
                   />
-                  Featured Product
+                  ⭐ Featured Product
                 </label>
                 <label className="text-sm text-gray-400 flex items-center gap-2">
                   <input 
@@ -793,7 +816,7 @@ const AdminDashboard = () => {
                     onChange={(e) => setNewProduct({...newProduct, isOnSale: e.target.checked})}
                     className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500"
                   />
-                  On Sale
+                  🔥 On Sale
                 </label>
               </div>
               {newProduct.isOnSale && (
@@ -811,7 +834,7 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {/* Description - Full Width */}
+            {/* Description */}
             <div>
               <label className="text-sm text-gray-400 mb-1 block">Product Description</label>
               <textarea 
@@ -835,7 +858,7 @@ const AdminDashboard = () => {
               />
             </div>
 
-            {/* Preview Section */}
+            {/* Preview */}
             {newProduct.images[0] && (
               <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                 <p className="text-sm text-gray-400 mb-2">Preview:</p>
@@ -855,7 +878,6 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Submit Button */}
             <button 
               type="submit" 
               disabled={loading} 
@@ -863,7 +885,7 @@ const AdminDashboard = () => {
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Adding Product...
                 </div>
               ) : (
@@ -871,6 +893,129 @@ const AdminDashboard = () => {
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ============ SETTINGS TAB - NEW ============ */}
+      {activeTab === 'settings' && (
+        <div className="backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10 max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+            ⚙️ Settings
+          </h2>
+
+          <div className="space-y-6">
+            {/* Promotions Toggle */}
+            <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium flex items-center gap-2">
+                    <Lucide.Gift size={20} className="text-purple-400" />
+                    Promotions Page
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Enable or disable the promotions page on your store
+                  </p>
+                </div>
+                <button
+                  onClick={() => togglePromotions(!promotionsEnabled)}
+                  className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                    promotionsEnabled ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${
+                      promotionsEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                Status: {promotionsEnabled ? '✅ Enabled' : '⛔ Disabled'}
+              </div>
+            </div>
+
+            {/* Promotion Message */}
+            <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Lucide.MessageCircle size={20} className="text-purple-400" />
+                Promotion Message
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Custom message shown on promotions page
+              </p>
+              <input
+                type="text"
+                value={promotionMessage}
+                onChange={(e) => updatePromotionMessage(e.target.value)}
+                className="mt-3 w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition"
+                placeholder="e.g., 🔥 Limited Time Offers!"
+              />
+            </div>
+
+            {/* Quick Stats */}
+            <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Lucide.BarChart3 size={20} className="text-purple-400" />
+                Store Stats
+              </h3>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <p className="text-sm text-gray-400">Total Products</p>
+                  <p className="text-2xl font-bold">{products.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Total Orders</p>
+                  <p className="text-2xl font-bold">{orders.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">On Sale Products</p>
+                  <p className="text-2xl font-bold text-red-400">
+                    {products.filter(p => p.isOnSale).length}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Featured Products</p>
+                  <p className="text-2xl font-bold text-yellow-400">
+                    {products.filter(p => p.isFeatured).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="p-6 rounded-xl bg-red-500/10 border border-red-500/20">
+              <h3 className="text-lg font-medium text-red-400 flex items-center gap-2">
+                <Lucide.AlertTriangle size={20} />
+                Danger Zone
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">
+                These actions are irreversible
+              </p>
+              <div className="flex gap-4 mt-3">
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to clear all products?')) {
+                      // Add clear products logic if needed
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition text-sm"
+                >
+                  Clear All Products
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to reset all settings?')) {
+                      localStorage.clear();
+                      window.location.reload();
+                    }
+                  }}
+                  className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-xl hover:bg-yellow-500/30 transition text-sm"
+                >
+                  Reset Settings
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
