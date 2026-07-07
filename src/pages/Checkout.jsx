@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '../App';
 import { loadStripe } from '@stripe/stripe-js';
@@ -22,11 +22,11 @@ const CheckoutForm = ({ total, onSuccess }) => {
     street: '',
     city: '',
     state: '',
-    zip: '',        // ✅ Zip is optional
+    zip: '',        // ✅ Optional
     country: 'US'
   });
 
-  // ✅ List of required fields (zip excluded)
+  // Required fields (zip excluded)
   const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'state', 'country'];
 
   const handleChange = (e) => {
@@ -36,7 +36,7 @@ const CheckoutForm = ({ total, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // ✅ Validate only required fields
+    // Validate only required fields
     for (const key of requiredFields) {
       if (!formData[key]) {
         showToast(`Please fill in ${key}`, 'error');
@@ -65,19 +65,17 @@ const CheckoutForm = ({ total, onSuccess }) => {
           street: formData.street,
           city: formData.city,
           state: formData.state,
-          zip: formData.zip || '',   // ✅ Send empty string if not provided
+          zip: formData.zip || '',
           country: formData.country
         },
         paymentMethod: paymentMethod
       };
 
-      // For Stripe payments
+      // Stripe payment
       if (paymentMethod === 'stripe' && stripe && elements) {
-        // Create payment intent
         const res = await API.post('/create-payment-intent', { amount: total });
         const { clientSecret } = res.data;
 
-        // Confirm payment
         const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
             card: elements.getElement(CardElement),
@@ -101,7 +99,6 @@ const CheckoutForm = ({ total, onSuccess }) => {
         orderData.paymentStatus = 'pending';
       }
 
-      // Place order
       await placeOrder(orderData);
       onSuccess();
 
@@ -194,7 +191,6 @@ const CheckoutForm = ({ total, onSuccess }) => {
           className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none"
           required
         />
-        {/* ✅ Zip Code – Optional */}
         <input
           name="zip"
           placeholder="ZIP (optional)"
@@ -278,7 +274,7 @@ const Checkout = () => {
           </div>
         </div>
 
-        {/* Order Summary */}
+        {/* Order Summary - No shipping fee shown */}
         <div className="glass p-6 rounded-2xl border border-white/5 h-fit">
           <h3 className="font-bold mb-4">Order Summary</h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -293,9 +289,7 @@ const Checkout = () => {
             <span>Total</span>
             <span className="gradient-text">${total.toFixed(2)}</span>
           </div>
-          <div className="text-xs text-gray-500 mt-2">
-            {total > 50 ? '✅ Free shipping' : `🚚 Shipping: $5.00`}
-          </div>
+          {/* ✅ No shipping fee line here */}
         </div>
       </div>
     </div>
