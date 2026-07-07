@@ -22,9 +22,12 @@ const CheckoutForm = ({ total, onSuccess }) => {
     street: '',
     city: '',
     state: '',
-    zip: '',
+    zip: '',        // ✅ Zip is optional
     country: 'US'
   });
+
+  // ✅ List of required fields (zip excluded)
+  const requiredFields = ['name', 'email', 'phone', 'street', 'city', 'state', 'country'];
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,8 +36,8 @@ const CheckoutForm = ({ total, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    for (const key in formData) {
+    // ✅ Validate only required fields
+    for (const key of requiredFields) {
       if (!formData[key]) {
         showToast(`Please fill in ${key}`, 'error');
         return;
@@ -62,7 +65,7 @@ const CheckoutForm = ({ total, onSuccess }) => {
           street: formData.street,
           city: formData.city,
           state: formData.state,
-          zip: formData.zip,
+          zip: formData.zip || '',   // ✅ Send empty string if not provided
           country: formData.country
         },
         paymentMethod: paymentMethod
@@ -191,13 +194,13 @@ const CheckoutForm = ({ total, onSuccess }) => {
           className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none"
           required
         />
+        {/* ✅ Zip Code – Optional */}
         <input
           name="zip"
-          placeholder="ZIP *"
+          placeholder="ZIP (optional)"
           value={formData.zip}
           onChange={handleChange}
           className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none"
-          required
         />
       </div>
 
