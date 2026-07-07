@@ -29,6 +29,13 @@ const AdminDashboard = () => {
     return localStorage.getItem('promotionMessage') || '🔥 Limited Time Offers!';
   });
 
+  // ============ SOCIAL LINKS ============
+  const [socialLinks, setSocialLinks] = useState({
+    facebook: localStorage.getItem('social_facebook') || '',
+    instagram: localStorage.getItem('social_instagram') || '',
+    twitter: localStorage.getItem('social_twitter') || ''
+  });
+
   // ============ API BASE ============
   const API_BASE = 'https://growmart-back-production.up.railway.app/api';
 
@@ -270,6 +277,13 @@ const AdminDashboard = () => {
     localStorage.setItem('promotionMessage', msg);
   };
 
+  // ============ SOCIAL LINKS HANDLERS ============
+  const updateSocialLink = (platform, url) => {
+    setSocialLinks(prev => ({ ...prev, [platform]: url }));
+    localStorage.setItem(`social_${platform}`, url);
+    showNotification(`✅ ${platform.charAt(0).toUpperCase() + platform.slice(1)} link updated!`, 'success');
+  };
+
   // ============ DASHBOARD STATS ============
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const lowStock = products.filter(p => p.stock < 10);
@@ -431,7 +445,7 @@ const AdminDashboard = () => {
           { id: 'orders', label: '📦 Orders' },
           { id: 'products', label: '🛍️ Products' },
           { id: 'add-product', label: '➕ Add Product' },
-          { id: 'settings', label: '⚙️ Settings' }, // NEW TAB
+          { id: 'settings', label: '⚙️ Settings' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -896,7 +910,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ============ SETTINGS TAB - NEW ============ */}
+      {/* ============ SETTINGS TAB ============ */}
       {activeTab === 'settings' && (
         <div className="backdrop-blur-xl bg-white/5 p-8 rounded-2xl border border-white/10 max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -950,6 +964,55 @@ const AdminDashboard = () => {
                 className="mt-3 w-full px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none transition"
                 placeholder="e.g., 🔥 Limited Time Offers!"
               />
+            </div>
+
+            {/* ============ SOCIAL MEDIA LINKS ============ */}
+            <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Lucide.Link size={20} className="text-purple-400" />
+                Social Media Links
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">
+                Update your social media URLs (leave empty to hide)
+              </p>
+              <div className="space-y-3 mt-3">
+                {/* Facebook */}
+                <div className="flex items-center gap-3">
+                  <Lucide.Facebook size={20} className="text-blue-400" />
+                  <input
+                    type="url"
+                    placeholder="Facebook URL"
+                    value={socialLinks.facebook}
+                    onChange={(e) => updateSocialLink('facebook', e.target.value)}
+                    className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white text-sm"
+                  />
+                </div>
+                {/* Instagram */}
+                <div className="flex items-center gap-3">
+                  <Lucide.Instagram size={20} className="text-pink-400" />
+                  <input
+                    type="url"
+                    placeholder="Instagram URL"
+                    value={socialLinks.instagram}
+                    onChange={(e) => updateSocialLink('instagram', e.target.value)}
+                    className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white text-sm"
+                  />
+                </div>
+                {/* Twitter */}
+                <div className="flex items-center gap-3">
+                  <Lucide.Twitter size={20} className="text-sky-400" />
+                  <input
+                    type="url"
+                    placeholder="Twitter URL"
+                    value={socialLinks.twitter}
+                    onChange={(e) => updateSocialLink('twitter', e.target.value)}
+                    className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-purple-500/50 outline-none text-white text-sm"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Links will appear in the footer automatically.
+              </p>
             </div>
 
             {/* Quick Stats */}
