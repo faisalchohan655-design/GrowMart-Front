@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async'; // ✅ Added for SEO
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import * as Lucide from 'lucide-react';
@@ -24,6 +25,13 @@ import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+
+// ============ NEW SEO PAGES ============
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import FAQ from './pages/FAQ';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // ============ API Setup ============
 const API = axios.create({
@@ -291,41 +299,53 @@ const Toast = () => {
 // ============ App ============
 function App() {
   return (
-    <StoreProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-black text-white flex flex-col">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/promotions" element={<Promotions />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* ✅ Admin - Direct Access (No Auth Required) */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-          <LiveChat />
-          <VisitorsCounter />
-          <FlashSaleAlert />
-          <OrderNotification />
-          <Toast />
-        </div>
-      </BrowserRouter>
-    </StoreProvider>
+    <HelmetProvider> {/* ✅ SEO Provider */}
+      <StoreProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-black text-white flex flex-col">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:id" element={<ProductDetails />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/promotions" element={<Promotions />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                
+                {/* ✅ Admin - Direct Access */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                
+                {/* ✅ SEO Pages */}
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                
+                {/* Protected Route */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+            <LiveChat />
+            <VisitorsCounter />
+            <FlashSaleAlert />
+            <OrderNotification />
+            <Toast />
+          </div>
+        </BrowserRouter>
+      </StoreProvider>
+    </HelmetProvider>
   );
 }
 
