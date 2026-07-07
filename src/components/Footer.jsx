@@ -11,7 +11,7 @@ const Footer = () => {
     twitter: ''
   });
 
-  // Load social links from localStorage on mount
+  // Load social links from localStorage
   useEffect(() => {
     const facebook = localStorage.getItem('social_facebook') || '';
     const instagram = localStorage.getItem('social_instagram') || '';
@@ -19,7 +19,7 @@ const Footer = () => {
     setSocialLinks({ facebook, instagram, twitter });
   }, []);
 
-  // Helper to get link or fallback
+  // Helper: get link or '#'
   const getLink = (key) => socialLinks[key] || '#';
 
   return (
@@ -27,7 +27,7 @@ const Footer = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           
-          {/* Brand Section */}
+          {/* ============ BRAND ============ */}
           <div>
             <Link to="/" className="text-2xl font-bold gradient-text inline-block mb-3">
               GrowMart
@@ -46,7 +46,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* ============ QUICK LINKS ============ */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Quick Links</h4>
             <ul className="space-y-2 text-sm">
@@ -56,7 +56,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* ============ SUPPORT ============ */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Support</h4>
             <ul className="space-y-2 text-sm">
@@ -66,7 +66,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal & Social */}
+          {/* ============ LEGAL & SOCIAL ============ */}
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Legal</h4>
             <ul className="space-y-2 text-sm">
@@ -78,7 +78,6 @@ const Footer = () => {
             <div className="mt-6">
               <h4 className="text-sm font-medium text-gray-400 mb-3">Follow Us</h4>
               <div className="flex gap-3">
-                {/* Facebook */}
                 <a
                   href={getLink('facebook')}
                   target="_blank"
@@ -90,7 +89,6 @@ const Footer = () => {
                 >
                   <Lucide.Facebook size={18} className="text-gray-300 hover:text-purple-400" />
                 </a>
-                {/* Instagram */}
                 <a
                   href={getLink('instagram')}
                   target="_blank"
@@ -102,7 +100,6 @@ const Footer = () => {
                 >
                   <Lucide.Instagram size={18} className="text-gray-300 hover:text-purple-400" />
                 </a>
-                {/* Twitter */}
                 <a
                   href={getLink('twitter')}
                   target="_blank"
@@ -114,13 +111,13 @@ const Footer = () => {
                 >
                   <Lucide.Twitter size={18} className="text-gray-300 hover:text-purple-400" />
                 </a>
-                {/* YouTube removed */}
+                {/* YouTube removed – only 3 icons */}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Copyright */}
+        {/* ============ COPYRIGHT – INTERNATIONAL ============ */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -131,7 +128,7 @@ const Footer = () => {
           <p className="flex items-center gap-1 mt-2 sm:mt-0">
             <span>Made with</span>
             <Lucide.Heart size={14} className="text-red-500 fill-red-500" />
-            <span>in Pakistan</span>
+            <span>by GrowMart</span>
           </p>
         </motion.div>
       </div>
