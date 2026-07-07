@@ -274,7 +274,7 @@ const Checkout = () => {
           </div>
         </div>
 
-        {/* Order Summary - No shipping fee shown */}
+        {/* Order Summary – Professional Shipping Fee Display */}
         <div className="glass p-6 rounded-2xl border border-white/5 h-fit">
           <h3 className="font-bold mb-4">Order Summary</h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -285,11 +285,25 @@ const Checkout = () => {
               </div>
             ))}
           </div>
-          <div className="border-t border-white/5 mt-3 pt-3 flex justify-between font-bold">
-            <span>Total</span>
-            <span className="gradient-text">${total.toFixed(2)}</span>
+          <div className="border-t border-white/5 mt-3 pt-3 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Subtotal</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+            {/* ✅ Professional shipping message */}
+            <div className="flex justify-between text-sm text-gray-400">
+              <span>Shipping</span>
+              <span className="italic">Calculated at checkout</span>
+            </div>
+            <div className="flex justify-between font-bold text-lg pt-2 border-t border-white/5">
+              <span>Total</span>
+              <span className="gradient-text">${total.toFixed(2)}</span>
+            </div>
+            {/* Note about shipping */}
+            <p className="text-xs text-gray-500 mt-2 italic">
+              * Shipping costs will be confirmed based on your location and order weight.
+            </p>
           </div>
-          {/* ✅ No shipping fee line here */}
         </div>
       </div>
     </div>
