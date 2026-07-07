@@ -17,7 +17,8 @@
     "socket.io-client": "^4.7.2",
     "@stripe/stripe-js": "^2.1.0",
     "@stripe/react-stripe-js": "^2.3.0",
-    "recharts": "^2.10.3"
+    "recharts": "^2.10.3",
+    "react-helmet-async": "^2.0.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.4",
